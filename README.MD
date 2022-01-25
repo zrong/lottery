@@ -2,11 +2,9 @@
 
 年会抽奖程序，3D 球体抽奖，支持奖品信息配置，参与抽奖人员信息`Excel`导入，抽奖结果`Excel`导出
 
-如果该程序对你有帮助😎😎😎，希望给个⭐**star**⭐喔。😘😘😘😍🥰🎉🎈🎃
+基于 <https://github.com/moshang-xc/lottery> 修改。
 
-> github 地址： [https://github.com/moshang-xc/lottery](https://github.com/moshang-xc/lottery)
-
-## 技术
+## 技术实现
 
 技术：Node + Express + Three.js
 
@@ -14,23 +12,13 @@
 
 前端抽奖界面通过`Three.js`实现 3D 抽奖球，引用了`Three.js`的官方 3D 示例
 
-## 功能描述：
+## 功能描述
 
 1. 可将抽奖结果进行保存实时下载到 excel 中🎉
 2. 已抽取人员不在参与抽取，抽中的人员不在现场可以重新抽取🎁
 3. 刷新或者关掉服务器，会保存当前已抽取的数据，不会进行数据重置，只有点击界面上的重置按钮，才能重置抽奖数据🧧
 4. 每次抽取的奖品数目可配置🎈
 5. 抽取完所有奖品后还可以继续抽取特别奖(例如：现在抽取红包，追加的奖品等)，此时默认一次抽取一个🧨
-
-## 预览
-
-![lottery.gif](https://raw.githubusercontent.com/moshang-xc/blog/master/share/lottery.gif)
-
-![index.jpg](https://raw.githubusercontent.com/moshang-xc/blog/master/share/index.jpg)
-
-![start.jpg](https://raw.githubusercontent.com/moshang-xc/blog/master/share/start.jpg)
-
-![end.jpg](https://raw.githubusercontent.com/moshang-xc/blog/master/share/end.jpg)
 
 ## 安装
 
@@ -145,7 +133,7 @@ const EACH_COUNT = [1, 1, 5];
 该标识用于显示在抽奖卡片上。
 
 ```js
-const COMPANY = "MoShang";
+const COMPANY = "SAGI GAMES";
 ```
 ## License
 MIT

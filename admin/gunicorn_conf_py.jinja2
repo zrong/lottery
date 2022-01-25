@@ -1,0 +1,54 @@
+#====================================
+# 使用 Gunicorn 部署 pyape 实例时候的配置文件
+# 2020-05-17
+# author: zrong
+#====================================
+import multiprocessing
+import os
+
+{%- if wsgi_app is not defined %} {% set wsgi_app = 'wsgi:pyape_app' %} {% endif %}
+{%- if workers is not defined %} {% set workers = 'multiprocessing.cpu_count() * 2 + 1' %} {% endif %}
+{%- if user is not defined %} {% set user = 'app' %} {% endif %}
+{%- if group is not defined %} {% set group = 'app' %} {% endif %}
+{%- if daemon is not defined %} {% set daemon = 'False' %} {% endif %}
+
+wsgi_app = '{{wsgi_app}}'
+
+{%- if proc_name %}
+proc_name = '{{proc_name}}'
+{%- endif %}
+
+{%- if chdir %}
+chdir = '{{chdir}}'
+{%- endif %}
+
+{%- if pidfile %}
+pidfile = '{{pidfile}}'
+{%- endif %}
+user = '{{user}}'
+group = '{{group}}'
+{%- if umask is defined %}
+umask = {{umask}}
+{%- endif %}
+{%- if bind %}
+bind = '{{bind}}'
+{%- endif %}
+
+{%- if worker_class %}
+worker_class = '{{worker_class}}'
+{%- endif %}
+workers = {{workers}}
+{%- if threads %}
+threads = {{threads}}
+{%- endif %}
+daemon = {{daemon}}
+
+{%- if capture_output %}
+capture_output = {{capture_output}}
+{%- endif %}
+{%- if errorlog %}
+errorlog = '{{errorlog}}'
+{%- endif %}
+{%- if accesslog %}
+accesslog = '{{accesslog}}'
+{%- endif %}

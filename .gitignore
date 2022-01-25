@@ -114,11 +114,9 @@ venv.bak/
 # mypy
 .mypy_cache/
 
-# pyape
-*.yaml
-/logs
-/*.json
-
-# lottery
+# lottery/admin
+/admin/*.yaml
+/admin/logs
+/admin/*.json
 *.xlsx.bak
 db.sqlite

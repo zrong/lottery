@@ -1,0 +1,22 @@
+upstream server_pyape {
+        # fail_timeout=0 means we always retry an upstream even if it failed
+        # to return a good HTTP response
+
+        # for UNIX domain socket setups
+        server unix:/srv/app/pyape/gunicorn.sock fail_timeout=0;
+
+        # for a TCP configuration
+        # server 192.168.0.7:8000 fail_timeout=0;
+}
+
+server {
+    location /api/pyape { try_files $uri $uri/ @proxy_pyape; }
+    location @proxy_pyape {
+        proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
+        proxy_set_header X-Forwarded-Proto $scheme;
+        proxy_set_header Host $http_host;
+        # proxy_buffering off;
+        proxy_redirect off;
+        proxy_pass http://server_pyape;
+    }
+}
