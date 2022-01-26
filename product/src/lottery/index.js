@@ -59,9 +59,8 @@ initAll();
  * 初始化所有DOM
  */
 function initAll() {
-  window.AJAX({
-    url: "/getTempData",
-    success(data) {
+  axios.post("/getTempData")
+    .then(function(data) {
       // 获取基础数据
       prizes = data.cfgData.prizes;
       EACH_COUNT = data.cfgData.EACH_COUNT;
@@ -93,8 +92,7 @@ function initAll() {
       showPrizeList(currentPrizeIndex);
       let curLucks = basicData.luckyUsers[currentPrize.type];
       setPrizeData(currentPrizeIndex, curLucks ? curLucks.length : 0, true);
-    }
-  });
+    });
 
   window.AJAX({
     url: "/getUsers",
