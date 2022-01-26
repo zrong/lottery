@@ -18,6 +18,17 @@ from pyape import gconfig
 go = Blueprint('go', __name__)
 
 
+def shift(t: int, limit: int) -> list[int]:
+    """ 抽出对应数量的随机数
+    :param t: 抽几个数字
+    :param limit: 最大数字
+    """
+    lucky_list = []
+    for i in range(t):
+        lucky_list.append(math.floor(random.random() * limit))
+    return lucky_list
+
+
 def shuffle(arr):
     """ 打乱顺序
     """

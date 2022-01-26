@@ -6,21 +6,24 @@ app.go.view
 提供所有 /go 的视图方法
 """
 
-from collections import defaultdict
+from collections import OrderedDict, defaultdict
+from tokenize import group
 from flask import jsonify
 from sqlalchemy import func, distinct
 
 
 from pyape import gconfig
-from pyape.app import vofun, checker, gdb
+from pyape.app import vofun, checker, gdb, vofun
 from pyape.app.re2fun import get_request_values, responseto
 from pyape.util.func import parse_int
 
 from app.models import Prize, User, Round, History
 
 from . import go
-from . import shuffle, write_xlsx
+from . import shuffle, write_xlsx, shift
 
+
+wn = 'waiting_for_save'
 
 def _get_lucky_users() -> list[list]:
     """ 获取已经获奖的用户列表"""
@@ -89,11 +92,90 @@ def _get_prizes() -> tuple:
             'img': f'../img/{prize.image_name}'
         })
     return rounds, prizes
-        
 
+
+def _update_round(round: int, prize_id:list[int], user_id: list[int]):
+    """ 中奖人员名单更新"""
+    rounds = Round.query.filter_by(round=round).all()
+    for pid, uid in zip(prize_id, user_id):
+        for round in rounds:
+            if round.prize_id == pid:
+                round.user_id = uid
+                break
+    gdb.session.add_all(rounds)
+    gdb.session.commit()
+
+
+def _update_round_by_saved():
+    saved_vo = vofun.valueobject_get(0, None, wn, 1, 0, True)
+    if saved_vo and not saved_vo.get('error'):
+        waiting_for_save = saved_vo['vo']
+        _update_round(waiting_for_save['round'], waiting_for_save['prize_id'], waiting_for_save['user_id'])
+        # 更新后删除临时保存
+        vofun.valueobject_del(vid=None, name=wn)
+    
+
+def _clear_saved_vo():
+    saved_vo = vofun.valueobject_get(0, None, wn, 1, 0, True)
+    if saved_vo and not saved_vo.get('error'):
+        waiting_for_save = saved_vo['vo']
+        hs = []
+        for pid, uid in zip(waiting_for_save['prize_id'], waiting_for_save['user_id']):
+            hs.append(History(user_id=uid, prize_id=pid, round=waiting_for_save['round']))
+        gdb.session.add_all(hs)
+        gdb.session.commit()
+    vofun.valueobject_del(vid=None, name=wn)
+
+
+@go.route('/lucky', methods=['POST'])
+def lucky():
+    """ 抽奖
+    """
+    round, clear = get_request_values('round', 'clear', request_key='json')
+    round_rows = Round.query.\
+        join(Prize, Prize.prize_id == Round.prize_id).\
+        with_entities(Prize.prize_id, Prize.prize_name, Prize.level, Prize.level_name, Round.round).\
+        filter(Round.round==round).\
+        all()
+
+    # 清除上次抽奖
+    if clear:
+        _clear_saved_vo()
+    # 将缓存中的记录更新到 round 表中
+    _update_round_by_saved()
+
+    left_users = _get_left_users()
+    lucky_indices = shift(len(round_rows), len(left_users))
+
+    # 临时保存在 vo 对象中，下一次抽奖再保存
+    waiting_for_save = {
+        'round': round,
+        'prize_id': [row.prize_id for row in round_rows],
+        'user_id': [left_users[i][0] for i in lucky_indices],
+    }
+    
+    lucky = []
+    for i in range(len(round_rows)):
+        user = left_users[lucky_indices[i]].copy()
+        user.append(round_rows[i].prize_id)
+        user.append(round_rows[i].prize_name)
+        user.append(round_rows[i].level_name)
+        lucky.append(user)
+
+    vofun.valueobject_add(0, 0, wn, waiting_for_save , 0)
+    return responseto(lucky=lucky)
+
+
+@go.route('/update_saved', methods=['POST'])
+def update_saved_vo():
+    """ 从临时存储中向 round 表更新，一般在抽奖完毕后调用一次
+    """
+    _update_round_by_saved()
+    return jsonify({'type': 'success'})
+
+    
 @go.route('/getTempData', methods=['POST'])
-@go.route('/fodder', methods=['GET'])
-def fodder():
+def gettempdata():
     rounds, prizes = _get_prizes()
     left_users = _get_left_users()
     shuffle(left_users)
@@ -107,6 +189,45 @@ def fodder():
         leftUsers=left_users,
         luckyData=lucky_data)
 
+
+@go.route('/fodder', methods=['POST'])
+def fodder():
+    """ 初始化抽奖数据
+    """
+    # 将上一轮没有保存的临时抽奖数据更新到 round 表
+    _update_round_by_saved()
+
+    left_users = _get_left_users()
+    shuffle(left_users)
+    
+    lucky_users = _get_lucky_users()
+    lucky_data = defaultdict(list)
+    for user in lucky_users:
+        lucky_data[user.level].append([user.user_id, user.name, user.department])
+
+    # 获取所有 Round
+    round_prizes = Round.query.\
+        join(Prize, Round.prize_id == Prize.prize_id).\
+        with_entities(
+            Prize.level,
+            Prize.level_name,
+            Prize.prize_id,
+            Prize.prize_name,
+            Prize.image_name, 
+            Round.user_id,
+            Round.round).\
+        order_by(Round.round.asc()).\
+        all()
+    grouped = OrderedDict()
+    for rp in round_prizes:
+        round_value = grouped.get(rp.round)
+        if round_value is None:
+            grouped[rp.round] = {'round': rp.round, 'prize': []}
+        grouped[rp.round]['prize'].append(gdb.to_response_data(rp))
+    return responseto(round=list(grouped.values()), config={'COMPANY': 'SAGI'}, 
+        left_users=left_users,
+        lucky_users=lucky_data)
+        
 
 @go.route('/getUsers', methods=['POST'])
 @go.route('/user', methods=['GET'])
@@ -176,5 +297,6 @@ def reset():
     """
     History.query.delete()
     Round.query.update({'user_id':None})
+    vofun.valueobject_del(vid=None, name=wn)
     gdb.session.commit()
     return jsonify({'type': 'success'})

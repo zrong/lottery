@@ -4,6 +4,7 @@ const MAX_TOP = 300,
 let defaultType = 0;
 
 let prizes;
+let roundList;
 const DEFAULT_MESS = [
   "我是该抽中一等奖还是一等奖呢，纠结ing...",
   "听说要提前一个月吃素才能中大奖喔！",
@@ -153,6 +154,11 @@ function setPrizes(pri) {
   lasetPrizeIndex = pri.length - 1;
 }
 
+
+/**
+ * 设置当前展示的抽奖礼物列表
+ * @param {int} currentPrizeIndex 
+ */
 function showPrizeList(currentPrizeIndex) {
   let currentPrize = prizes[currentPrizeIndex];
   if (currentPrize.type === defaultType) {
@@ -303,12 +309,58 @@ function addDanMu(text) {
   lastDanMuList.push(text);
 }
 
+
+/***
+ * 设置抽奖轮数列表
+ */
+function setRoundList(rl) {
+  roundList = rl;
+}
+
+/**
+ * 设置当前抽奖轮的礼物列表
+ * @param {int} curRoundIndex
+ */
+function showRound(curRoundIndex) {
+  let curRound = roundList[curRoundIndex];
+  let title;
+  // 本轮中超过一个礼物就仅显示奖项类型
+  if (curRound.prize.length > 1) {
+    title = curRound.prize[0].level_name;
+  } else {
+    title = curRound.prize[0].level_name + ' ' + curRound.prize[0].prize_name;
+  }
+  let htmlCode = `<div class="prize-mess">
+    正在抽取
+      <label id="prizeType" class="prize-shine">第${curRound.round}轮</label>
+      <label id="prizeText" class="prize-shine">${title}</label> 共
+      <label id="prizeLeft" class="prize-shine">${curRound.prize.length}</label>个
+    </div>
+    <ul class="prize-list">`;
+  curRound.prize.forEach(item => {
+    htmlCode += `<li id="prize-item-${item.type}" class="prize-item shine">
+                  <span></span><span></span><span></span><span></span>
+                  <div class="prize-img">
+                    <img src="../img/${item.image_name}" alt="${item.prize_name}">
+                  </div>
+                  <div class="prize-text">
+                    <h5 class="prize-title">${item.level_name} ${item.prize_name}(${item.prize_id})</h5>
+                  </div>
+                </li>`;
+  });
+  htmlCode += `</ul>`;
+
+  document.querySelector("#prizeBar").innerHTML = htmlCode;
+ }
+
 export {
   startMaoPao,
   showPrizeList,
+  showRound,
   setPrizeData,
   addDanMu,
   setPrizes,
+  setRoundList,
   resetPrize,
   addQipao
 };
