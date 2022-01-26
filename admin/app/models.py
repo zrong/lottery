@@ -47,6 +47,9 @@ class Round(gdb.Model):
     # 奖品 ID，与轮次对应，一起成为主键
     prize_id = gdb.Column(gdb.INT, primary_key=True, nullable=False)
 
+    # 奖品级别，1 代表特等奖
+    level = gdb.Column(gdb.INT, nullable=False)
+
     # 中奖者 user_id，默认为 null
     user_id = gdb.Column(gdb.INT, nullable=True)
 
@@ -70,6 +73,30 @@ class User(gdb.Model):
 
     def __repr__(self):
         return '<User %r.%r>' % (self.user_id, self.name)
+
+
+class History(gdb.Model):
+    """ 保存重新抽奖的的记录，备查
+    """
+    __tablename__ = 'history'
+
+    # 序号
+    sn = gdb.Column(gdb.INT, primary_key=True, nullable=False, autoincrement=True)
+
+    # 用户 id
+    user_id = gdb.Column(gdb.INT, nullable=False)
+    
+    # 奖品 ID，与轮次对应，一起成为主键
+    prize_id = gdb.Column(gdb.INT, nullable=True)
+
+    # 抽奖轮次
+    round = gdb.Column(gdb.INT, nullable=True)
+
+    # 奖项类型
+    level = gdb.Column(gdb.INT, nullable=True)
+
+    def __repr__(self):
+        return '<History %r.%r>' % (self.user_id, self.sn)
 
 
 def init_from_xlsx() -> None:
@@ -107,6 +134,7 @@ def init_from_xlsx() -> None:
                 db_row = Round(
                     round=row[0].value,
                     prize_id=row[1].value,
+                    level=row[2].value,
                 )
             rows.append(db_row)
         gdb.session.add_all(rows)

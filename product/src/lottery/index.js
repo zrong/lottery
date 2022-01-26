@@ -8,7 +8,7 @@ import {
   setPrizeData,
   resetPrize
 } from "./prizeList";
-import { NUMBER_MATRIX } from "./config.js";
+import { NUMBER_MATRIX, uri } from "./config.js";
 
 const ROTATE_TIME = 3000;
 const BASE_HEIGHT = 1080;
@@ -59,43 +59,13 @@ initAll();
  * 初始化所有DOM
  */
 function initAll() {
-  axios.post("/getTempData")
-    .then(function(data) {
-      // 获取基础数据
-      prizes = data.cfgData.prizes;
-      EACH_COUNT = data.cfgData.EACH_COUNT;
-      COMPANY = data.cfgData.COMPANY;
-      HIGHLIGHT_CELL = createHighlight();
-      basicData.prizes = prizes;
-      setPrizes(prizes);
-
-      TOTAL_CARDS = ROW_COUNT * COLUMN_COUNT;
-
-      // 读取当前已设置的抽奖结果
-      basicData.leftUsers = data.leftUsers;
-      basicData.luckyUsers = data.luckyData;
-
-      let prizeIndex = basicData.prizes.length - 1;
-      for (; prizeIndex > -1; prizeIndex--) {
-        if (
-          data.luckyData[prizeIndex] &&
-          data.luckyData[prizeIndex].length >=
-            basicData.prizes[prizeIndex].count
-        ) {
-          continue;
-        }
-        currentPrizeIndex = prizeIndex;
-        currentPrize = basicData.prizes[currentPrizeIndex];
-        break;
-      }
-
-      showPrizeList(currentPrizeIndex);
-      let curLucks = basicData.luckyUsers[currentPrize.type];
-      setPrizeData(currentPrizeIndex, curLucks ? curLucks.length : 0, true);
-    });
+  window.AJAX({
+    url: uri("/getTempData"),
+    success: initData
+  });
 
   window.AJAX({
-    url: "/getUsers",
+    url: uri("/getUsers"),
     success(data) {
       basicData.users = data;
 
@@ -105,6 +75,45 @@ function initAll() {
       shineCard();
     }
   });
+}
+
+/**
+ * 初始化数据
+ * @param {*}} data 
+ */
+function initData(data) {
+  // 获取基础数据
+  prizes = data.cfgData.prizes;
+  EACH_COUNT = data.cfgData.EACH_COUNT;
+  COMPANY = data.cfgData.COMPANY;
+  HIGHLIGHT_CELL = createHighlight();
+  basicData.prizes = prizes;
+  setPrizes(prizes);
+
+  TOTAL_CARDS = ROW_COUNT * COLUMN_COUNT;
+  console.log(TOTAL_CARDS)
+
+  // 读取当前已设置的抽奖结果
+  basicData.leftUsers = data.leftUsers;
+  basicData.luckyUsers = data.luckyData;
+
+  let prizeIndex = basicData.prizes.length - 1;
+  for (; prizeIndex > -1; prizeIndex--) {
+    if (
+      data.luckyData[prizeIndex] &&
+      data.luckyData[prizeIndex].length >=
+        basicData.prizes[prizeIndex].count
+    ) {
+      continue;
+    }
+    currentPrizeIndex = prizeIndex;
+    currentPrize = basicData.prizes[currentPrizeIndex];
+    break;
+  }
+
+  showPrizeList(currentPrizeIndex);
+  let curLucks = basicData.luckyUsers[currentPrize.type];
+  setPrizeData(currentPrizeIndex, curLucks ? curLucks.length : 0, true);
 }
 
 function initCards() {
@@ -719,7 +728,7 @@ function shineCard() {
 function setData(type, data) {
   return new Promise((resolve, reject) => {
     window.AJAX({
-      url: "/saveData",
+      url: uri("/saveData"),
       data: {
         type,
         data
@@ -737,7 +746,7 @@ function setData(type, data) {
 function setErrorData(data) {
   return new Promise((resolve, reject) => {
     window.AJAX({
-      url: "/errorData",
+      url: uri("/errorData"),
       data: {
         data
       },
@@ -753,10 +762,10 @@ function setErrorData(data) {
 
 function exportData() {
   window.AJAX({
-    url: "/export",
+    url: uri("/export"),
     success(data) {
       if (data.type === "success") {
-        location.href = data.url;
+        location.href = uri(data.url, true);
       }
     }
   });
@@ -764,7 +773,7 @@ function exportData() {
 
 function reset() {
   window.AJAX({
-    url: "/reset",
+    url: uri("/reset"),
     success(data) {
       console.log("重置成功");
     }

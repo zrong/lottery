@@ -137,6 +137,13 @@ const NUMBER_MATRIX = [
   ]
 ];
 
+function uri(method, root) {
+  // return `http://127.0.0.1:8888${method}`
+  middle = root ? '' : '/go'
+  return `http://127.0.0.1:5001${middle}${method}`
+}
+
 module.exports = {
-  NUMBER_MATRIX
+  NUMBER_MATRIX,
+  uri
 };

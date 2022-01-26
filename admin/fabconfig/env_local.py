@@ -11,13 +11,14 @@ env_local = {
     },
     'config_json': {
         'FLASK': {
-            'SQLALCHEMY_DATABASE_URI': 'sqlite:///Users/zrong/storage/zrong/lottery/admin/db.sqlite',
+            'SQLALCHEMY_DATABASE_URI': 'sqlite:////Users/zrong/storage/zrong/lottery/admin/db.sqlite',
         },
         'PATH': {
             'STATIC_FOLDER': 'dist',
             'STATIC_URL_PATH': '/static',
             'modules': {
                 'cf': '/cf',
+                'go': '/go',
             }
         },
     },

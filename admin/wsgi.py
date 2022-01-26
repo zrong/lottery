@@ -12,7 +12,10 @@ gconfig = GlobalConfig(appdir)
 class LotteryResponse(PyapeResponse):
     @property
     def cors_config(self):
-        return PyapeResponse.CORS_DEFAULT
+        cors = PyapeResponse.CORS_DEFAULT.copy()
+        cors['Access-Control-Allow-Headers'] = 'X-Requested-With, Content-Type'
+        return cors
+
 
 def setup_app(pyape_app, gdb):
     """ 初始化整个项目
